@@ -19,7 +19,7 @@ export class UsersList implements OnInit {
     columns: [
       { key: 'email', label: 'Email', width: '40%' },
       {
-        key: 'full_name',
+        key: 'name',
         label: 'Nome',
         width: '30%',
         format: (value) => value || '-',
@@ -29,15 +29,8 @@ export class UsersList implements OnInit {
         label: 'Função',
         width: '15%',
         format: (value) => this.formatRole(value),
-      },
-      {
-        key: 'created_at',
-        label: 'Data de Criação',
-        width: '15%',
-        format: (value) => this.formatDate(value),
-      },
+      }
     ],
-    newButtonLabel: 'Novo Usuário',
     editPath: '/app/users/edit',
     newPath: '/app/users/new',
     onDelete: (id: string) => this.userService.deleteUser(id),
@@ -64,6 +57,7 @@ export class UsersList implements OnInit {
   private formatRole(role?: string): string {
     const roles: Record<string, string> = {
       admin: 'Administrador',
+      parent: 'Responsável',
       teacher: 'Professor',
       student: 'Aluno',
       staff: 'Funcionário',

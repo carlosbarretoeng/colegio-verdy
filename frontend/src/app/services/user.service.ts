@@ -4,8 +4,9 @@ import { SupabaseService } from './supabase.service';
 
 export interface User {
   id: string;
-  email: string;
-  full_name?: string;
+  email?: string;
+  name?: string;
+  avatar_url?: string;
   role?: string;
   created_at?: string;
   updated_at?: string;
@@ -27,9 +28,7 @@ export class UserService {
     try {
       const { data, error } = await this.supabase
         .getClient()
-        .from('users')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .rpc('get_all_users');
 
       if (error) throw error;
       this.usersSubject.next(data || []);
@@ -47,7 +46,7 @@ export class UserService {
     try {
       const { data, error } = await this.supabase
         .getClient()
-        .from('users')
+        .from('user_profile')
         .select('*')
         .eq('id', id)
         .single();
@@ -67,7 +66,7 @@ export class UserService {
     try {
       const { data, error } = await this.supabase
         .getClient()
-        .from('users')
+        .from('user_profile')
         .insert([user])
         .select()
         .single();
@@ -88,7 +87,7 @@ export class UserService {
     try {
       const { data, error } = await this.supabase
         .getClient()
-        .from('users')
+        .from('user_profile')
         .update(user)
         .eq('id', id)
         .select()
@@ -110,7 +109,7 @@ export class UserService {
     try {
       const { error } = await this.supabase
         .getClient()
-        .from('users')
+        .from('user_profile')
         .delete()
         .eq('id', id);
 

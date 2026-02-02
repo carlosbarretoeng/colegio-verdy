@@ -1,13 +1,14 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterOutlet, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { initFlowbite } from 'flowbite';
 import { LogoComponent } from '../../components/logo/logo';
 import { AuthService } from '../../services/auth.service';
+import { LoadingService } from '../../services/loading.service';
 
 @Component({
   selector: 'app-main-layout',
-  imports: [RouterOutlet, CommonModule, LogoComponent],
+  imports: [RouterOutlet, CommonModule, LogoComponent, RouterLink],
   templateUrl: './main-layout.html',
   styleUrl: './main-layout.css',
 })
@@ -23,7 +24,10 @@ export class MainLayout implements OnInit, AfterViewInit {
     ], icon: 'fas fa-cogs' },
   ]
 
-  constructor(private authService: AuthService) {
+  constructor(
+    private authService: AuthService,
+    private loadingService: LoadingService
+  ) {
     this.currentUser$ = this.authService.currentUser;
   }
 
@@ -56,6 +60,7 @@ export class MainLayout implements OnInit, AfterViewInit {
 
   async onLogout(): Promise<void> {
     try {
+      this.loadingService.show();
       await this.authService.signOut();
     } catch (error) {
       console.error('Logout error:', error);

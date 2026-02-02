@@ -6,6 +6,7 @@ import { AuthService } from '../../services/auth.service';
 import { ButtonComponent } from '../../components/button/button';
 import { LogoComponent } from '../../components/logo/logo';
 import { InputFieldComponent } from '../../components/input-field/input-field';
+import { LoadingService } from '../../services/loading.service';
 
 @Component({
   selector: 'app-login',
@@ -22,8 +23,10 @@ export class Login {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
+    private loadingService: LoadingService,
     private router: Router
   ) {
+    this.loadingService.hide();
     // Se já está autenticado, redirecionar
     if (this.authService.isAuthenticated()) {
       this.router.navigate(['/app/dashboard']);

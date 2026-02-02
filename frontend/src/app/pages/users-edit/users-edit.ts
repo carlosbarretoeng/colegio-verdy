@@ -36,7 +36,7 @@ export class UsersEdit implements OnInit {
   ) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      full_name: ['', Validators.required],
+      name: ['', Validators.required],
       role: ['', Validators.required],
     });
   }

@@ -33,7 +33,7 @@ export class UsersNew {
   ) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      full_name: ['', Validators.required],
+      name: ['', Validators.required],
       role: ['', Validators.required],
     });
   }

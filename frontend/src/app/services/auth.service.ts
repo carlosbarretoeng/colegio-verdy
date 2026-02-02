@@ -91,8 +91,8 @@ export class AuthService {
       await this.supabase.signOut();
       this.currentUserSubject.next(null);
       this.router.navigate(['/login']);
-    } finally {
-      this.loadingService.hide();
+    }catch (error) {
+      throw error;
     }
   }
 
