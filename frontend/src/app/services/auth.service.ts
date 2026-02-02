@@ -1,9 +1,16 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { SupabaseService } from './supabase.service';
+import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
+import { ApiService } from './api.service';
 import { LoadingService } from './loading.service';
-import { User } from '@supabase/supabase-js';
+
+interface User {
+  id: number;
+  email: string;
+  name: string;
+  role: string;
+  avatar_url?: string;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -11,75 +18,78 @@ import { User } from '@supabase/supabase-js';
 export class AuthService {
   private currentUserSubject: BehaviorSubject<User | null>;
   public currentUser: Observable<User | null>;
+  private tokenKey = 'auth_token';
 
   constructor(
-    private supabase: SupabaseService,
+    private api: ApiService,
     private router: Router,
     private loadingService: LoadingService
   ) {
     this.currentUserSubject = new BehaviorSubject<User | null>(null);
     this.currentUser = this.currentUserSubject.asObservable();
-    this.initAuthListener();
+    this.initAuth();
   }
 
   public get currentUserValue(): User | null {
     return this.currentUserSubject.value;
   }
 
-  private async initAuthListener() {
-    // Verificar sessão atual
-    const { data } = await this.supabase.getSession();
-    if (data.session) {
-      this.currentUserSubject.next(data.session.user);
-    }
-
-    // Escutar mudanças de autenticação
-    this.supabase.getClient().auth.onAuthStateChange((event, session) => {
-      if (session) {
-        this.currentUserSubject.next(session.user);
-      } else {
+  private async initAuth() {
+    const token = localStorage.getItem(this.tokenKey);
+    if (token) {
+      try {
+        const response: any = await firstValueFrom(this.api.get('/me'));
+        this.currentUserSubject.next(response.user);
+      } catch (error) {
+        localStorage.removeItem(this.tokenKey);
         this.currentUserSubject.next(null);
       }
-    });
-  }
-
-  async signUp(email: string, password: string, metadata?: any) {
-    this.loadingService.show();
-    try {
-      const { data, error } = await this.supabase.signUp(email, password);
-      
-      if (error) {
-        throw error;
-      }
-
-      // Adicionar metadata se fornecido
-      if (metadata && data.user) {
-        await this.supabase.getClient().auth.updateUser({
-          data: metadata,
-        });
-      }
-
-      return data;
-    } finally {
-      this.loadingService.hide();
+    } else {
+      this.currentUserSubject.next(null);
     }
   }
 
   async signIn(email: string, password: string) {
     this.loadingService.show();
     try {
-      const { data, error } = await this.supabase.signIn(email, password);
+      const response: any = await firstValueFrom(
+        this.api.post('/login', { email, password })
+      );
       
-      if (error) {
-        throw error;
-      }
+      localStorage.setItem(this.tokenKey, response.token);
+      this.currentUserSubject.next(response.user);
+      this.router.navigate(['/app/dashboard']);
+      
+      return response;
+    } catch (error: any) {
+      console.error('Login error:', error);
+      throw error;
+    } finally {
+      this.loadingService.hide();
+    }
+  }
 
-      if (data.user) {
-        this.currentUserSubject.next(data.user);
-        this.router.navigate(['/app/dashboard']);
-      }
+  async signUp(email: string, password: string, name: string, role?: string) {
+    this.loadingService.show();
+    try {
+      const response: any = await firstValueFrom(
+        this.api.post('/register', { 
+          email, 
+          password, 
+          password_confirmation: password,
+          name,
+          role 
+        })
+      );
 
-      return data;
+      localStorage.setItem(this.tokenKey, response.token);
+      this.currentUserSubject.next(response.user);
+      this.router.navigate(['/app/dashboard']);
+
+      return response;
+    } catch (error) {
+      console.error('Register error:', error);
+      throw error;
     } finally {
       this.loadingService.hide();
     }
@@ -88,43 +98,15 @@ export class AuthService {
   async signOut() {
     this.loadingService.show();
     try {
-      await this.supabase.signOut();
+      await firstValueFrom(this.api.post('/logout', {}));
+      localStorage.removeItem(this.tokenKey);
       this.currentUserSubject.next(null);
       this.router.navigate(['/login']);
-    }catch (error) {
-      throw error;
-    }
-  }
-
-  async resetPassword(email: string) {
-    this.loadingService.show();
-    try {
-      const { data, error } = await this.supabase.getClient().auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      return data;
-    } finally {
-      this.loadingService.hide();
-    }
-  }
-
-  async updatePassword(newPassword: string) {
-    this.loadingService.show();
-    try {
-      const { data, error } = await this.supabase.getClient().auth.updateUser({
-        password: newPassword,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      return data;
+    } catch (error) {
+      console.error('Logout error:', error);
+      localStorage.removeItem(this.tokenKey);
+      this.currentUserSubject.next(null);
+      this.router.navigate(['/login']);
     } finally {
       this.loadingService.hide();
     }
@@ -134,11 +116,22 @@ export class AuthService {
     return this.currentUserSubject.value !== null;
   }
 
-  async refreshSession() {
-    const { data, error } = await this.supabase.getClient().auth.refreshSession();
-    if (error) {
+  getToken(): string | null {
+    return localStorage.getItem(this.tokenKey);
+  }
+
+  async resetPassword(email: string) {
+    this.loadingService.show();
+    try {
+      // TODO: Implementar endpoint de reset password no Laravel
+      await firstValueFrom(
+        this.api.post('/forgot-password', { email })
+      );
+    } catch (error) {
+      console.error('Reset password error:', error);
       throw error;
+    } finally {
+      this.loadingService.hide();
     }
-    return data;
   }
 }

@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { SupabaseService } from './supabase.service';
+import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
+import { ApiService } from './api.service';
 
 export interface User {
-  id: string;
+  id: string | number;
   email?: string;
   name?: string;
   avatar_url?: string;
@@ -19,20 +19,17 @@ export class UserService {
   private usersSubject = new BehaviorSubject<User[]>([]);
   public users$ = this.usersSubject.asObservable();
 
-  constructor(private supabase: SupabaseService) {}
+  constructor(private api: ApiService) {}
 
   /**
    * Buscar todos os usuários
    */
   async getUsers(): Promise<User[]> {
     try {
-      const { data, error } = await this.supabase
-        .getClient()
-        .rpc('get_all_users');
-
-      if (error) throw error;
-      this.usersSubject.next(data || []);
-      return data || [];
+      const response: any = await firstValueFrom(this.api.get('/users'));
+      const users = response.users || response || [];
+      this.usersSubject.next(users);
+      return users;
     } catch (error) {
       console.error('Erro ao buscar usuários:', error);
       return [];
@@ -44,15 +41,8 @@ export class UserService {
    */
   async getUserById(id: string): Promise<User | null> {
     try {
-      const { data, error } = await this.supabase
-        .getClient()
-        .from('user_profile')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
-      return data || null;
+      const response: any = await firstValueFrom(this.api.get(`/users/${id}`));
+      return response.user || response || null;
     } catch (error) {
       console.error('Erro ao buscar usuário:', error);
       return null;
@@ -64,16 +54,9 @@ export class UserService {
    */
   async createUser(user: Omit<User, 'id' | 'created_at' | 'updated_at'>): Promise<User | null> {
     try {
-      const { data, error } = await this.supabase
-        .getClient()
-        .from('user_profile')
-        .insert([user])
-        .select()
-        .single();
-
-      if (error) throw error;
-      await this.getUsers(); // Atualizar lista
-      return data || null;
+      const response: any = await firstValueFrom(this.api.post('/users', user));
+      await this.getUsers();
+      return response.user || response || null;
     } catch (error) {
       console.error('Erro ao criar usuário:', error);
       throw error;
@@ -83,19 +66,11 @@ export class UserService {
   /**
    * Atualizar usuário
    */
-  async updateUser(id: string, user: Partial<User>): Promise<User | null> {
+  async updateUser(id: string | number, user: Partial<User>): Promise<User | null> {
     try {
-      const { data, error } = await this.supabase
-        .getClient()
-        .from('user_profile')
-        .update(user)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      await this.getUsers(); // Atualizar lista
-      return data || null;
+      const response: any = await firstValueFrom(this.api.put(`/users/${id}`, user));
+      await this.getUsers();
+      return response.user || response || null;
     } catch (error) {
       console.error('Erro ao atualizar usuário:', error);
       throw error;
@@ -105,16 +80,10 @@ export class UserService {
   /**
    * Deletar usuário
    */
-  async deleteUser(id: string): Promise<boolean> {
+  async deleteUser(id: string | number): Promise<boolean> {
     try {
-      const { error } = await this.supabase
-        .getClient()
-        .from('user_profile')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      await this.getUsers(); // Atualizar lista
+      await firstValueFrom(this.api.delete(`/users/${id}`));
+      await this.getUsers();
       return true;
     } catch (error) {
       console.error('Erro ao deletar usuário:', error);

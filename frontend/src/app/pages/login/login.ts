@@ -33,8 +33,8 @@ export class Login {
     }
 
     this.loginForm = this.fb.group({
-      email: ['carlos@verdy.com', [Validators.required, Validators.email]],
-      password: ['password', [Validators.required, Validators.minLength(6)]],
+      email: ['admin@example.com', [Validators.required, Validators.email]],
+      password: ['password123', [Validators.required, Validators.minLength(6)]],
     });
   }
 

@@ -72,7 +72,7 @@ export class Register {
 
     try {
       const { name, email, password } = this.registerForm.value;
-      await this.authService.signUp(email, password, { name });
+      await this.authService.signUp(email, password, name);
       
       this.success = true;
       
