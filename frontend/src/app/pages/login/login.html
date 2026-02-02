@@ -1,0 +1,61 @@
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-200 to-slate-100 dark:bg-gray-900 px-4 py-12">
+  <div class="w-full max-w-[320px]">
+    
+    <div class="mb-4 mx-auto w-[250px]">
+      <app-logo class="mx-auto"></app-logo>
+    </div>
+    
+    <!-- Card -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4">
+      <!-- Erro -->
+      <div *ngIf="error" class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 dark:bg-red-900/20 dark:text-red-400 rounded">
+        <div class="flex items-center">
+          <i class="fas fa-exclamation-circle mr-2"></i>
+          <span>{{ error }}</span>
+        </div>
+      </div>
+
+      <!-- Formulário -->
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4">
+        <!-- Email -->
+        <app-input-field
+          label="Email"
+          type="email"
+          placeholder="seu@email.com"
+          icon="fas fa-envelope"
+          [control]="$any(loginForm.get('email'))"
+          [error]="getErrorMessage('email')"
+        ></app-input-field>
+
+        <!-- Senha -->
+        <app-input-field
+          label="Senha"
+          type="password"
+          placeholder="••••••••"
+          icon="fas fa-lock"
+          [control]="$any(loginForm.get('password'))"
+          [error]="getErrorMessage('password')"
+        ></app-input-field>
+
+        <!-- Esqueceu a senha -->
+        <div class="flex items-center justify-end">
+          <a routerLink="/forgot-password" class="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
+            Esqueceu a senha?
+          </a>
+        </div>
+
+        <!-- Botão de Login -->
+        <app-button
+          label="Entrar"
+          type="submit"
+          color="primary"
+          size="lg"
+          [fullWidth]="true"
+          [loading]="loading"
+          [disabled]="loginForm.invalid"
+        ></app-button>
+      </form>
+
+    </div>
+  </div>
+</div>

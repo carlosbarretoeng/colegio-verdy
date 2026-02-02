@@ -1,0 +1,18 @@
+<button
+  [type]="type"
+  [disabled]="disabled || loading"
+  [class]="buttonClasses"
+  (click)="onClick($event)"
+>
+  <!-- Ícone esquerda -->
+  <i *ngIf="icon && iconPosition === 'left'" [class]="'fas ' + icon + (label ? ' mr-2' : '')"></i>
+
+  <!-- Loading spinner -->
+  <i *ngIf="loading" class="fas fa-spinner fa-spin" [class.mr-2]="label"></i>
+
+  <!-- Label -->
+  <span *ngIf="label">{{ label }}</span>
+
+  <!-- Ícone direita -->
+  <i *ngIf="icon && iconPosition === 'right'" [class]="'fas ' + icon + (label ? ' ml-2' : '')"></i>
+</button>
